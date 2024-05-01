@@ -1,10 +1,19 @@
 use std::error::Error;
 use std::fs::OpenOptions;
 use std::io;
-use csv::Writer;
+use std::process::exit;
+use csv::{Reader, Writer};
 use ring::digest;
 use std::str;
 use std::io::{Write};
+
+use std::{
+    env,
+    ffi::OsString,
+    fs::File,
+    process,
+};
+
 
 /**
  *  This is a URL Shortner project, making it very simple for first iteration
@@ -25,12 +34,16 @@ fn store_key_val_pairs(key: &str, val: &str) -> Result<(), Box<dyn Error>> {
     write!(file, "{},{}", key, val)?;
     Ok(())  
 }
-fn read_key_val_pairs(){
-    let mut rdr = csv::Reader::from_reader(io::stdin());
+fn read_key_val_pairs() -> Result<(), Box<dyn Error>> {
+    let file = File::open("database.csv")?;
+    let mut rdr = Reader::from_reader(file);
+
     for result in rdr.records() {
-        let record = result.expect("a CSV record");
+        let record = result?;
         println!("{:?}", record);
     }
+
+    Ok(())
 }
 
 fn redirect(value : &str)
@@ -40,7 +53,7 @@ fn redirect(value : &str)
 
 fn create_and_prompt()
 {
-    println!("Welcome to the URL shortner service (written in RUST), please type in a url below to get started ");
+    println!("Please type in a url below to get started ");
     let mut url  = String::new();
     io::stdin().read_line(&mut url).expect("failed to readline");
     let digest = digest::digest(&digest::SHA256, url.as_bytes());
@@ -59,6 +72,7 @@ fn create_and_prompt()
             }
         }
 
+
 }
 
 fn main() {
@@ -71,15 +85,15 @@ fn main() {
             Ok(num) => num,
             Err(_) => continue,
         };
-        if (option == 1)
+        if option == 1
         {
             create_and_prompt(); 
 
         }
         
-        else if (option ==2 )
+        else if option == 2 
         {
-            println!("This would be the retrieval step of the url");
+            read_key_val_pairs();
         }
 
         else
